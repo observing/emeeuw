@@ -1,0 +1,50 @@
+{
+  "name": "emeeuw",
+  "version": "0.0.0",
+  "description": "emeeuws",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec --ui bdd test.js",
+    "watch": "mocha --watch --reporter spec --ui bdd test.js",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --reporter spec --ui bdd test.js",
+    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- --reporter spec --ui bdd test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/observing/emeeuw"
+  },
+  "keywords": [
+    "bird",
+    "chimp",
+    "e-mail",
+    "email",
+    "emeeuw",
+    "gull",
+    "mail",
+    "mailchimp",
+    "mandrill",
+    "pidgeon",
+    "pigeon"
+  ],
+  "author": "Arnout Kazemier",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/observing/emeeuw/issues"
+  },
+  "homepage": "https://github.com/observing/emeeuw",
+  "devDependencies": {
+    "assume": "0.0.x",
+    "istanbul": "0.3.x",
+    "mocha": "2.0.x",
+    "pre-commit": "0.0.x"
+  },
+  "dependencies": {
+    "diagnostics": "0.0.x",
+    "eventemitter3": "0.1.x",
+    "fusing": "0.4.x",
+    "juice2": "1.3.x",
+    "marked": "0.3.x",
+    "node-mandrill-retry": "1.0.x",
+    "temper": "0.2.x"
+  }
+}
