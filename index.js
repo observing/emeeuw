@@ -1,7 +1,7 @@
 'use strict';
 
 var mandrill = require('node-mandrill-retry')
-  , debug = require('diagnostics')('pidgeon')
+  , debug = require('diagnostics')('emeeuw')
   , Temper = require('temper')
   , juice = require('juice2')
   , fuse = require('fusing')
@@ -27,10 +27,13 @@ function Emeeuw(api, options) {
   this.mandrill = mandrill(api);
 
   this.message = {
+    headers: {
+      'Content-type': 'text/html; charset=UTF-8'
+    },
     track_opens: 'open' in options ? options.open : true,
     track_clicks: 'click' in options ? options.click : true,
     subject: options.subject,
-    from: options.from,
+    from_email: options.from,
     to: options.to
   };
 
@@ -92,19 +95,27 @@ Emeeuw.prototype.from = function from(location) {
  */
 Emeeuw.prototype.send = function send(template, options, fn) {
   var message = this.merge({}, this.message)
-    , pidgeon = this;
+    , emeeuw = this;
 
   /**
    * Inline the CSS and send the e-mail to all the things.
    *
+   * @param {Object} spec Template specification.
    * @api private
    */
-  function inline() {
-    juice(message.html, function juicy(err, html) {
-      if (err) return fn(err);
+  function inline(spec) {
+    juice.juiceContent(message.html, {
+      url: 'file://'+ path.resolve(process.cwd(), spec.template)
+    }, function juicy(err, html) {
+      if (err) {
+        debug('failed to inline the css: '+ err.message);
+        return fn(err);
+      }
 
       message.html = html;
-      pidgeon.mandrill('/messages/send', message, fn);
+      emeeuw.mandrill('/messages/send', {
+        message: message
+      }, fn);
     });
   }
 
@@ -112,10 +123,13 @@ Emeeuw.prototype.send = function send(template, options, fn) {
     if (err) return fn(err);
 
     options.text = options.text || spec.text;
-    options.html = options.html || spec.render(options);
+    options.html = options.html || spec.render(emeeuw.merge(options, spec));
+    emeeuw.merge(message, options);
 
-    pidgeon.merge(message, options);
-    inline();
+    if ('string' === typeof message.to) message.to = { email: message.to };
+    if (!Array.isArray(message.to)) message.to = [message.to];
+
+    inline(spec);
   });
 
   return this;
@@ -137,8 +151,11 @@ Emeeuw.prototype.find = function find(name, fn) {
 
   spec.render = this.temper.fetch(spec.template).server;
 
-  md(spec.md, { gfm: true, tables: true }, function compiled(err, markdown) {
-    if (err) return fn(err);
+  md(spec.text, { gfm: true, tables: true }, function compiled(err, markdown) {
+    if (err) {
+      debug('failed to process the markdown due to: '+ err.message);
+      return fn(err);
+    }
 
     spec.markdown = markdown;
     fn(undefined, spec);
