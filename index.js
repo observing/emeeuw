@@ -17,8 +17,10 @@ var mandrill = require('node-mandrill-retry')
  * - `open`: Track e-mail open, defaults to true.
  * - `click`: Track clicks in e-mail, defaults to true.
  *
+ * @constructor
  * @param {String} api The Mandrill API key.
  * @param {Object} options Configuration.
+ * @api public
  */
 function Emeeuw(api, options) {
   if (!this) return new Emeeuw(api, options);
@@ -43,6 +45,14 @@ function Emeeuw(api, options) {
 
 fuse(Emeeuw, require('eventemitter3'));
 
+/**
+ * Add a new template source.
+ *
+ * @TODO add support for different template engines.
+ * @param {String} location
+ * @returns {Emeeuw}
+ * @api public
+ */
 Emeeuw.prototype.from = function from(location) {
   var stat = fs.statSync(location)
     , files = [];
