@@ -3,10 +3,10 @@
 var mandrill = require('node-mandrill-retry')
   , debug = require('diagnostics')('emeeuw')
   , Temper = require('temper')
+  , md = require('./markdown')
   , juice = require('juice2')
   , fuse = require('fusing')
   , path = require('path')
-  , md = require('marked')
   , fs = require('fs');
 
 /**
@@ -173,6 +173,6 @@ Emeeuw.prototype.find = function find(name, fn) {
 };
 
 //
-// Expose the interface
+// Expose the interface.
 //
 module.exports = Emeeuw;
