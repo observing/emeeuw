@@ -65,12 +65,21 @@ be used as HTML body.
 
 ### Emeeuw.send
 
-After adding template files to your emeeuw instance we can start sending emails.
+After adding template files to your `emeeuw` instance we can start sending emails.
 This method requires 3 arguments:
 
 1. The name of the template you want send
 2. Options to send the message.
 3. Completion callback.
+
+```js
+emeeuw.send('example', {
+  to: 'example@domain.name',
+  subject: 'My first mass mailing'
+}, function (err, resp) {
+
+});
+```
 
 ## License
 
