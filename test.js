@@ -8,6 +8,7 @@ describe('emeeuw', function () {
 
   beforeEach(function () {
     emeeuw = new Emeeuw('fake string', {
+      from: 'hello@world.com',
       dryrun: true
     });
   });
@@ -20,17 +21,109 @@ describe('emeeuw', function () {
     assume(Emeeuw).is.a('function');
   });
 
+  it('can be constructed without new', function () {
+    emeeuw.destroy();
+    emeeuw = new Emeeuw('dafadsfa');
+  });
+
+  it('can turnoff open tracking', function () {
+    assume(emeeuw.message.track_opens).is.true();
+    emeeuw.destroy();
+
+    emeeuw = new Emeeuw('dafafa', { open: false });
+    assume(emeeuw.message.track_opens).is.false();
+  });
+
+  it('can turnoff click tracking', function () {
+    assume(emeeuw.message.track_clicks).is.true();
+    emeeuw.destroy();
+
+    emeeuw = new Emeeuw('dafafa', { click: false });
+    assume(emeeuw.message.track_clicks).is.false();
+  });
+
   describe('#from', function () {
     it('returns it self', function () {
+      assume(emeeuw.templates.folder).is.a('undefined');
       assume(emeeuw.from(path.join(__dirname, 'fixtures'))).equals(emeeuw);
+      assume(emeeuw.templates.object).is.a('undefined');
     });
 
     it('allows absolute paths to files', function () {
       assume(emeeuw.templates.file).is.a('undefined');
-
       emeeuw.from(path.join(__dirname, 'fixtures', 'file.md'));
-
       assume(emeeuw.templates.file).is.a('object');
+    });
+
+    it('only allows markdown files as source', function () {
+      assume(emeeuw.templates.test).is.a('undefined');
+      emeeuw.from(path.join(__dirname, 'test.js'));
+      assume(emeeuw.templates.test).is.a('undefined');
+    });
+  });
+
+  describe('#send', function () {
+    beforeEach(function () {
+      emeeuw.from(path.join(__dirname, 'fixtures'));
+    });
+
+    it('transforms the markdown to html', function (next) {
+      emeeuw.send('folder', {
+        to: 'foo@bar.com'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.html).is.a('string');
+        assume(message.html).includes('Template from a folder');
+        assume(message.html).includes('<h1>');
+        assume(message.html).includes('</h1>');
+
+        next();
+      });
+    });
+
+    it('merges in the subject', function (next) {
+      emeeuw.send('folder', {
+        to: 'foo@bar.com',
+        subject: 'foo'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.subject).equals('foo');
+        assume(message.from_email).equals('hello@world.com');
+
+        next();
+      });
+    });
+
+    it('allows custom html & text', function (next) {
+      emeeuw.send('folder', {
+        to: 'foo@bar.com',
+        subject: 'foo',
+        text: 'foobar',
+        html: '<strong>lol</strong>'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.html).includes('<strong>lol</strong>');
+        assume(message.text).equals('foobar');
+
+        next();
+      });
+    });
+
+    it('receives an error when you send an unknown template', function (next) {
+      emeeuw.send('hello i dont really exist as template', {
+        to: 'foo@bar.com',
+      }, function (err, message) {
+        assume(err.message).includes('hello i dont really');
+        assume(err.message).includes('Unknown');
+
+        next();
+      });
     });
   });
 
