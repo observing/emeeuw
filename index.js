@@ -161,7 +161,7 @@ Emeeuw.prototype.find = function find(name, fn) {
 
   spec.render = this.temper.fetch(spec.template).server;
 
-  md(spec.text, { gfm: true, tables: true }, function compiled(err, markdown) {
+  md(spec.text, function compiled(err, markdown) {
     if (err) {
       debug('failed to process the markdown due to: '+ err.message);
       return fn(err);
