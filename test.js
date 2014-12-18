@@ -23,7 +23,9 @@ describe('emeeuw', function () {
 
   it('can be constructed without new', function () {
     emeeuw.destroy();
-    emeeuw = new Emeeuw('dafadsfa');
+    emeeuw = Emeeuw('dafadsfa');
+
+    assume(emeeuw).is.instanceOf(Emeeuw);
   });
 
   it('can turnoff open tracking', function () {
