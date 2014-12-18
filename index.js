@@ -14,8 +14,9 @@ var mandrill = require('node-mandrill-retry')
  *
  * Options:
  *
- * - `open`: Track e-mail open, defaults to true.
  * - `click`: Track clicks in e-mail, defaults to true.
+ * - `dryrun` Don't actually send the damn e-mail.
+ * - `open`: Track e-mail open, defaults to true.
  *
  * @constructor
  * @param {String} api The Mandrill API key.
@@ -39,6 +40,7 @@ function Emeeuw(api, options) {
     to: options.to
   };
 
+  this.dryrun = 'dryrun' in options ? options.dryrun : false;
   this.templates = Object.create(null);
   this.temper = new Temper();
 }
@@ -117,12 +119,15 @@ Emeeuw.prototype.send = function send(template, options, fn) {
     juice.juiceContent(message.html, {
       url: 'file://'+ path.resolve(process.cwd(), spec.template)
     }, function juicy(err, html) {
+      message.html = html;
+
       if (err) {
         debug('failed to inline the css: '+ err.message);
-        return fn(err);
+        return fn(err, message);
       }
 
-      message.html = html;
+      if (emeeuw.dryrun) return fn(undefined, message);
+
       emeeuw.mandrill('/messages/send', {
         message: message
       }, fn);
