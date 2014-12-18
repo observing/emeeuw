@@ -81,10 +81,10 @@ Emeeuw.prototype.from = function from(location) {
   }).map(function map(spec) {
     spec.extension = path.extname(spec.file);
     spec.filename = spec.file.replace(spec.extension, '');
+    spec.engine = path.extname(spec.filename) || 'html';
 
     spec.name = spec.name || path.basename(spec.file, spec.extension);
-    spec.text = fs.readFileSync(spec.filename +'.md', 'utf-8');
-    spec.template = spec.filename +'.html';
+    spec.template = spec.filename +'.'+ spec.engine;
 
     return spec;
   }).forEach(function add(spec) {
@@ -134,7 +134,7 @@ Emeeuw.prototype.send = function send(template, options, fn) {
     });
   }
 
-  this.find(template, function finder(err, spec) {
+  this.find(template, options, function finder(err, spec) {
     if (err) return fn(err);
 
     options.text = options.text || spec.text;
@@ -158,13 +158,14 @@ Emeeuw.prototype.send = function send(template, options, fn) {
  * @param {Function} fn Completion callback.
  * @api private
  */
-Emeeuw.prototype.find = function find(name, fn) {
+Emeeuw.prototype.find = function find(name, data, fn) {
   var spec = this.templates[name];
 
   if (!spec) return fn(new Error('Unknown template: '+ name));
   if (spec.render) return fn(undefined, spec);
 
-  spec.render = this.temper.fetch(spec.template).server;
+  spec.render = this.temper.fetch(spec.template, spec.engine).server;
+  spec.text = this.temper.fetch(spec.file, spec.engine).server(data);
 
   md(spec.text, function compiled(err, markdown) {
     if (err) {
