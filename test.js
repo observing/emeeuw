@@ -98,6 +98,35 @@ describe('emeeuw', function () {
       });
     });
 
+    it('prefers options over meta data', function (next) {
+      emeeuw.send('file', {
+        to: 'foo@bar.com',
+        subject: 'foo'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.subject).equals('foo');
+        assume(message.from_email).equals('hello@world.com');
+
+        next();
+      });
+    });
+
+    it('merges meta data in the options', function (next) {
+      emeeuw.send('file', {
+        to: 'foo@bar.com'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.subject).equals('This is the subject, extracted from meta data.');
+        assume(message.from_email).equals('hello@world.com');
+
+        next();
+      });
+    });
+
     it('allows custom html & text', function (next) {
       emeeuw.send('folder', {
         to: 'foo@bar.com',

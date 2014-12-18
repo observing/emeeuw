@@ -2,6 +2,7 @@
 
 var mandrill = require('node-mandrill-retry')
   , debug = require('diagnostics')('emeeuw')
+  , dollars = require('dollars')
   , Temper = require('temper')
   , md = require('./markdown')
   , juice = require('juice2')
@@ -106,7 +107,7 @@ Emeeuw.prototype.from = function from(location) {
  * @api public
  */
 Emeeuw.prototype.send = function send(template, options, fn) {
-  var message = this.merge({}, this.message)
+  var message = dollars.object.clone(this.message)
     , emeeuw = this;
 
   /**
@@ -126,20 +127,34 @@ Emeeuw.prototype.send = function send(template, options, fn) {
         return fn(err, message);
       }
 
-      if (emeeuw.dryrun) return fn(undefined, message);
+      //
+      // Force async execution to prevent our stacktrace from being eaten by
+      // juice. This process.nextTick can be removed once:
+      //
+      //   https://github.com/andrewrk/juice/issues/18
+      //
+      // Has been fixed.
+      //
+      process.nextTick(function next() {
+        if (emeeuw.dryrun) return fn(undefined, message);
 
-      emeeuw.mandrill('/messages/send', {
-        message: message
-      }, fn);
+        emeeuw.mandrill('/messages/send', {
+          message: message
+        }, fn);
+      });
     });
   }
 
   this.find(template, options, function finder(err, spec) {
     if (err) return fn(err);
 
-    options.text = options.text || spec.text;
-    options.html = options.html || spec.render(emeeuw.merge(options, spec));
-    emeeuw.merge(message, options);
+    spec = dollars.object.clone(spec);
+    emeeuw.merge(spec, spec.meta);
+    emeeuw.merge(spec, options);
+
+    if (!spec.html) spec.html = spec.render(spec);
+
+    emeeuw.merge(message, spec);
 
     if ('string' === typeof message.to) message.to = { email: message.to };
     if (!Array.isArray(message.to)) message.to = [message.to];
@@ -159,10 +174,11 @@ Emeeuw.prototype.send = function send(template, options, fn) {
  * @api private
  */
 Emeeuw.prototype.find = function find(name, data, fn) {
-  var spec = this.templates[name];
+  var spec = this.templates[name]
+    , emeeuw = this;
 
   if (!spec) return fn(new Error('Unknown template: '+ name));
-  if (spec.render) return fn(undefined, spec);
+  if (spec.meta) return fn(undefined, spec);
 
   spec.render = this.temper.fetch(spec.template, spec.engine).server;
   spec.text = this.temper.fetch(spec.file, spec.engine).server(data);
@@ -173,9 +189,39 @@ Emeeuw.prototype.find = function find(name, data, fn) {
       return fn(err);
     }
 
+    spec.meta = emeeuw.meta(spec.text);
     spec.markdown = markdown;
+
     fn(undefined, spec);
   });
+};
+
+/**
+ * Extract metadata out of the source markdown file. We assume that metadata is
+ * stored in a special URL format so it will not be included in the outputted
+ * markdown:
+ *
+ * ```md
+ * [meta:subject]: <> (This is the content for the meta `subject` key.)
+ * ```
+ *
+ * All metadata specifications should be prefixed `meta:`
+ *
+ * @param {String} text Markdown body.
+ * @returns {Object}
+ * @api private
+ */
+Emeeuw.prototype.meta = function meta(text) {
+  var parser = /\[meta:([^\]]+?)\]:\s<>\s\(([^\)]+?)\)/i;
+
+  return text.split(/\n/).reduce(function reduce(meta, line) {
+    if (!parser.test(line)) return meta;
+
+    var data = parser.exec(line);
+    meta[data[1]] = data[2];
+
+    return meta;
+  }, {});
 };
 
 /**
