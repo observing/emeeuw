@@ -177,6 +177,21 @@ Emeeuw.prototype.find = function find(name, fn) {
   });
 };
 
+/**
+ * Destroy the Emeeuw instance and free all memory.
+ *
+ * @returns {Boolean}
+ * @api public
+ */
+Emeeuw.prototype.destroy = function destroy() {
+  if (!this.templates) return false;
+
+  this.temper.destroy();
+  this.message = this.templates = this.temper = null;
+
+  return true;
+};
+
 //
 // Expose the interface.
 //
