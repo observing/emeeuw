@@ -81,6 +81,15 @@ emeeuw.send('example', {
 });
 ```
 
+### Emeeuw.destroy
+
+Completely destroy the instance so it will release memory of the things it
+created internally.
+
+```js
+emeeuw.destroy();
+```
+
 ## License
 
 MIT
