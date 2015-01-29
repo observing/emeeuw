@@ -52,11 +52,12 @@ fuse(Emeeuw, require('eventemitter3'));
  * Add a new template source.
  *
  * @TODO add support for different template engines.
- * @param {String} location
+ * @param {String} location Location of the templates.
+ * @param {Object} defaults Default data that we should add to the template.
  * @returns {Emeeuw}
  * @api public
  */
-Emeeuw.prototype.from = function from(location) {
+Emeeuw.prototype.from = function from(location, defaults) {
   var stat = fs.statSync(location)
     , files = [];
 
@@ -86,6 +87,7 @@ Emeeuw.prototype.from = function from(location) {
 
     spec.name = spec.name || path.basename(spec.file, spec.extension);
     spec.template = spec.filename +'.'+ spec.engine;
+    spec.defaults = defaults || {};
 
     return spec;
   }).forEach(function add(spec) {
@@ -149,10 +151,14 @@ Emeeuw.prototype.send = function send(template, options, fn) {
     if (err) return fn(err);
 
     spec = dollars.object.clone(spec);
+
+    emeeuw.merge(spec, spec.defaults);
     emeeuw.merge(spec, spec.meta);
     emeeuw.merge(spec, options);
 
-    if (!spec.html) spec.html = spec.render(spec);
+    if (!spec.html) {
+      spec.html = spec.render(spec);
+    }
 
     emeeuw.merge(message, spec);
 
