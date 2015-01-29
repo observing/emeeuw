@@ -83,10 +83,10 @@ Emeeuw.prototype.from = function from(location, defaults) {
   }).map(function map(spec) {
     spec.extension = path.extname(spec.file);
     spec.filename = spec.file.replace(spec.extension, '');
-    spec.engine = path.extname(spec.filename) || 'html';
+    spec.engine = path.extname(spec.filename).slice(1) || 'html';
 
     spec.name = spec.name || path.basename(spec.file, spec.extension);
-    spec.template = spec.filename +'.'+ spec.engine;
+    spec.template = path.extname(spec.filename) ? spec.filename : spec.filename +'.html';
     spec.defaults = defaults || {};
 
     return spec;
@@ -122,7 +122,7 @@ Emeeuw.prototype.send = function send(template, options, fn) {
     juice.juiceContent(message.html, {
       url: 'file://'+ path.resolve(process.cwd(), spec.template)
     }, function juicy(err, html) {
-      message.html = html;
+      if (html) message.html = html;
 
       if (err) {
         debug('failed to inline the css: '+ err.message);
