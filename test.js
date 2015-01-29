@@ -85,6 +85,24 @@ describe('emeeuw', function () {
       });
     });
 
+    it('transforms the ejs to html', function (next) {
+      emeeuw.send('another', {
+        to: 'foo@bar.com',
+        engine: 'EJS-lol'
+      }, function (err, message) {
+        if (err) return next(err);
+
+        assume(message).is.a('object');
+        assume(message.html).is.a('string');
+        assume(message.html).includes('Hello I');
+        assume(message.html).includes('EJS-lol');
+        assume(message.html).includes('<h2>');
+        assume(message.html).includes('</h2>');
+
+        next();
+      });
+    });
+
     it('merges in the subject', function (next) {
       emeeuw.send('folder', {
         to: 'foo@bar.com',
