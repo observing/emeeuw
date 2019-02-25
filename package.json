@@ -40,7 +40,7 @@
     "pre-commit": "~1.2.0"
   },
   "dependencies": {
-    "diagnostics": "~1.0.1",
+    "diagnostics": "~2.0.0",
     "dollars": "0.0.x",
     "eventemitter3": "~2.0.2",
     "fusing": "1.0.x",
