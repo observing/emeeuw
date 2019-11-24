@@ -34,7 +34,7 @@
   "homepage": "https://github.com/observing/emeeuw",
   "devDependencies": {
     "assume": "~1.5.0",
-    "ejs": "~2.5.2",
+    "ejs": "~3.0.1",
     "istanbul": "~0.4.5",
     "mocha": "~3.1.2",
     "pre-commit": "~1.2.0"
